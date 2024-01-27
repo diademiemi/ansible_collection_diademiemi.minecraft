@@ -1,0 +1,76 @@
+---
+- name: Example server
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Install a Purpur server
+      diademiemi.minecraft.server:
+        path: "{{ lookup('env', 'HOME') }}/purpur"
+        type: purpur  # purpur/paper/spigot/vanilla
+        version: 1.20.2  # Server version
+        build: latest  # Build number, "latest" fetches the latest build
+        java_opts: 'aikar'  # empty string defaults to just memory opts, "aikar" adds Aikar's flags, any other string adds that string to the flags
+        min_memory: "8192"  # In MB
+        max_memory: "16384"  # In MB
+        plugins:
+          # - name: "Jar File Name"
+          #   source: "https://example.com/path/to/jar.jar"
+          #   type: url/bukkit/spigot/hangar
+          #   version: "1234567"  # Only for bukkit/hangar, "latest" fetches the latest version
+          #   state: present/absent/download  # Download forces redownload
+          - name: EssentialsX
+            source: https://ci.ender.zone/job/EssentialsX/1531/artifact/jars/EssentialsX-2.21.0-dev+24-0af4436.jar
+            type: url  # Downloads straight from the URL
+            state: present
+          - name: Vault
+            source: https://www.spigotmc.org/resources/vault.34315/
+            type: spigot  # Does not support downloading specific versions
+            state: present
+          - name: WorldGuard
+            source: https://dev.bukkit.org/projects/worldguard
+            type: bukkit
+            # version: 4675318
+            version: latest
+            state: present
+          - name: FastAsyncWorldEdit
+            source: https://ci.athion.net/job/FastAsyncWorldEdit/lastSuccessfulBuild/artifact/artifacts/FastAsyncWorldEdit-Bukkit-2.8.5-SNAPSHOT-639.jar
+            type: url
+            state: absent
+          - name: WorldEdit
+            source: https://dev.bukkit.org/projects/worldedit
+            type: bukkit
+            # version: 4954432
+            version: latest
+            state: present
+          - name: ViaVersion
+            source: https://hangar.papermc.io/ViaVersion/ViaVersion
+            type: hangar
+            # version: 4.9.2
+            version: latest
+            state: present
+          - name: LuckPerms
+            source: https://www.spigotmc.org/resources/luckperms.28140/
+            type: spigot
+            # version: 511529
+            state: present
+          - name: Geyser
+            source: https://download.geysermc.org/v2/projects/geyser/versions/2.2.0/builds/409/downloads/spigot
+            type: url
+            state: present
+          - name: Floodgate
+            source: https://download.geysermc.org/v2/projects/floodgate/versions/2.2.2/builds/85/downloads/spigot
+            type: url
+            state: present
+
+    - name: Place configs
+      ansible.builtin.template:
+        src: "{{ item.file | default(item) }}.j2"
+        dest: "{{ lookup('env', 'HOME') }}/purpur/{{ item | default(item) }}"
+        mode: '0644'
+      register: template_place
+      changed_when: template_place is changed and not item.ignore_changes | default(false)
+      loop:
+        - file: server.properties
+          ignore_changes: true
+
+...
